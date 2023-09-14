@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +22,11 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestClassOrder;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.TagFilter;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
 /**
  * Tests the {@link FileIndex} class.
@@ -643,6 +650,7 @@ public class FileIndexTest {
 	 */
 	@Nested
 	@Tag("F")
+	@Tag("approach")
 	@TestMethodOrder(OrderAnnotation.class)
 	public class F_ApproachTests {
 		/**
@@ -703,6 +711,32 @@ public class FileIndexTest {
 					.count();
 
 			Assertions.assertTrue(found == 0, debug);
+		}
+
+
+		/**
+		 * Causes this group of tests to fail if the other non-approach tests are
+		 * not yet passing.
+		 */
+		@Test
+		@Order(4)
+		public void testOthersPassing() {
+			var request = LauncherDiscoveryRequestBuilder.request()
+					.selectors(DiscoverySelectors.selectClass(FileIndexTest.class))
+					.filters(TagFilter.excludeTags("approach"))
+					.build();
+
+			var launcher = LauncherFactory.create();
+			var listener = new SummaryGeneratingListener();
+
+			Logger logger = Logger.getLogger("org.junit.platform.launcher");
+			logger.setLevel(Level.SEVERE);
+
+			launcher.registerTestExecutionListeners(listener);
+			launcher.execute(request);
+
+			Assertions.assertEquals(0, listener.getSummary().getTotalFailureCount(),
+					"Must pass other tests to earn credit for approach group!");
 		}
 	}
 
